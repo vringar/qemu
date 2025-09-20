@@ -24,7 +24,7 @@ static uint64_t remote_device_read(void *opaque, hwaddr offset, unsigned size)
     /* Simple pattern: return offset value for easy identification */
     value = offset | (size << 16);
     
-    /* TODO: add tracing back later */
+    trace_remote_device_read(offset, value, size);
     return value;
 }
 
@@ -33,11 +33,8 @@ static void remote_device_write(void *opaque, hwaddr offset, uint64_t value, uns
     RemoteDeviceState *s = REMOTE_DEVICE(opaque);
     
     (void)s;  /* Suppress unused variable warning */
-    (void)offset;
-    (void)value;
-    (void)size;
     
-    /* TODO: add tracing back later */
+    trace_remote_device_write(offset, value, size);
     /* No actual functionality - just logging */
 }
 
@@ -53,7 +50,10 @@ static const MemoryRegionOps remote_device_ops = {
 
 void remote_device_resize(RemoteDeviceState *s)
 {
+    trace_remote_device_resize_start(s->is_expanded);
+    
     if (s->is_expanded) {
+        trace_remote_device_resize_skipped();
         return; /* Already expanded */
     }
     
@@ -70,7 +70,7 @@ void remote_device_resize(RemoteDeviceState *s)
     
     s->is_expanded = true;
     
-    /* TODO: add tracing back later */
+    trace_remote_device_resized(REMOTE_DEVICE_INITIAL_SIZE, REMOTE_DEVICE_EXPANDED_SIZE);
 }
 
 static void remote_device_realize(DeviceState *dev, Error **errp)
@@ -79,7 +79,6 @@ static void remote_device_realize(DeviceState *dev, Error **errp)
     
     memory_region_init_io(&s->mmio, OBJECT(s), &remote_device_ops, s,
                           "reproducer-remote-mmio", REMOTE_DEVICE_INITIAL_SIZE);
-    sysbus_init_mmio(SYS_BUS_DEVICE(s), &s->mmio);
     
     s->is_expanded = false;
 }
@@ -95,7 +94,7 @@ static void remote_device_class_init(ObjectClass *klass, const void *data)
 
 static const TypeInfo remote_device_info = {
     .name = TYPE_REMOTE_DEVICE,
-    .parent = TYPE_SYS_BUS_DEVICE,
+    .parent = TYPE_DEVICE,
     .instance_size = sizeof(RemoteDeviceState),
     .class_init = remote_device_class_init,
 };

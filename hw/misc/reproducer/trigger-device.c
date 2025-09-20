@@ -30,10 +30,11 @@ static void trigger_device_write(void *opaque, hwaddr offset, uint64_t value, un
 {
     TriggerDeviceState *s = TRIGGER_DEVICE(opaque);
     
-    /* TODO: add tracing back later */
+    trace_trigger_device_write(offset, value, size);
     
     /* Any write triggers the remote device resize */
     if (s->remote_device) {
+        trace_trigger_device_resize_triggered();
         remote_device_resize(s->remote_device);
     }
 }
@@ -57,12 +58,18 @@ static void trigger_device_realize(DeviceState *dev, Error **errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(s), &s->mmio);
 }
 
+static Property trigger_device_properties[] = {
+    DEFINE_PROP_LINK("remote-device", TriggerDeviceState, remote_device,
+                     TYPE_REMOTE_DEVICE, RemoteDeviceState *),
+};
+
 static void trigger_device_class_init(ObjectClass *klass, const void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     
     dc->realize = trigger_device_realize;
     dc->desc = "Reproducer Trigger Device";
+    device_class_set_props(dc, trigger_device_properties);
     set_bit(DEVICE_CATEGORY_MISC, dc->categories);
 }
 

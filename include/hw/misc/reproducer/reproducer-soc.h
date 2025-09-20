@@ -19,6 +19,8 @@
 OBJECT_DECLARE_SIMPLE_TYPE(ReproducerSocState, REPRODUCER_SOC)
 
 /* Memory map */
+#define REPRODUCER_ROM_BASE       0x00000000
+#define REPRODUCER_ROM_SIZE       (64 * 1024)  /* 64KB ROM */
 #define REPRODUCER_TRIGGER_BASE   0x40000000
 #define REPRODUCER_TRIGGER_SIZE   4
 #define REPRODUCER_MAPPER_BASE    0x40001000
@@ -27,9 +29,10 @@ OBJECT_DECLARE_SIMPLE_TYPE(ReproducerSocState, REPRODUCER_SOC)
 struct ReproducerSocState {
     SysBusDevice parent_obj;
 
-    DeviceState cpu;
+    DeviceState *cpu;
     TriggerDeviceState trigger;
     MapperDeviceState mapper;
+    MemoryRegion rom;
 };
 
 #endif /* HW_MISC_REPRODUCER_SOC_H */

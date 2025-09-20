@@ -9,13 +9,15 @@
 # 3. Call the trace function from code using 'trace_' + <name>(args...)
 
 # hw/misc/reproducer/trigger-device.c
-reproducer_trigger_read(uint64_t offset, unsigned size) "offset=0x%"PRIx64" size=%u"
-reproducer_trigger_write(uint64_t offset, uint64_t value, unsigned size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=%u"
+trigger_device_write(uint64_t offset, uint64_t value, unsigned size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=%u"
+trigger_device_resize_triggered(void) "Triggering remote device resize"
 
 # hw/misc/reproducer/remote-device.c
-reproducer_remote_read(uint64_t offset, uint64_t value, unsigned size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=%u"
-reproducer_remote_write(uint64_t offset, uint64_t value, unsigned size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=%u"
-reproducer_remote_resize(uint32_t old_size, uint32_t new_size) "old_size=%u new_size=%u"
+remote_device_read(uint64_t offset, uint64_t value, unsigned size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=%u"
+remote_device_write(uint64_t offset, uint64_t value, unsigned size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=%u"
+remote_device_resize_start(bool is_expanded) "is_expanded=%d"
+remote_device_resize_skipped(void) "Already expanded, skipping resize"
+remote_device_resized(uint32_t old_size, uint32_t new_size) "old_size=%u new_size=%u"
 
 # hw/misc/reproducer/mapper-device.c
-reproducer_mapper_init(uint32_t secondary_size, uint32_t alias_size, uint32_t alias_offset) "secondary_size=%u alias_size=%u alias_offset=0x%x"
+mapper_device_remote_mounted(uint32_t offset, uint32_t size) "offset=0x%x size=%u"

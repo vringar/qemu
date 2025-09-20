@@ -11,7 +11,8 @@
 #define HW_MISC_REPRODUCER_REMOTE_DEVICE_H
 
 #include "qom/object.h"
-#include "hw/sysbus.h"
+#include "hw/qdev-core.h"
+#include "system/memory.h"
 
 #define TYPE_REMOTE_DEVICE "reproducer-remote-device"
 OBJECT_DECLARE_SIMPLE_TYPE(RemoteDeviceState, REMOTE_DEVICE)
@@ -20,7 +21,7 @@ OBJECT_DECLARE_SIMPLE_TYPE(RemoteDeviceState, REMOTE_DEVICE)
 #define REMOTE_DEVICE_EXPANDED_SIZE (16 * 1024)  /* 16 KiB */
 
 struct RemoteDeviceState {
-    SysBusDevice parent_obj;
+    DeviceState parent_obj;
 
     MemoryRegion mmio;
     bool is_expanded;
