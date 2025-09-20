@@ -3695,6 +3695,7 @@ if have_system
     'hw/mips',
     'hw/misc',
     'hw/misc/macio',
+    'hw/misc/reproducer',
     'hw/net',
     'hw/net/can',
     'hw/nubus',
