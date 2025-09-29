@@ -26,6 +26,7 @@ struct MapperDeviceState {
 
     MemoryRegion secondary_space;
     MemoryRegion alias_region;
+    MemoryRegion large_ram_region;  /* Large RAM that overlaps with remote device */
     AddressSpace secondary_as;
     
     RemoteDeviceState remote_device;

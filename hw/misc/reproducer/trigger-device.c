@@ -13,6 +13,42 @@
 #include "hw/misc/reproducer/trigger-device.h"
 #include "hw/qdev-properties.h"
 #include "trace.h"
+#include "qemu/timer.h"
+
+/* Global pointer to access device from timer callback - this simulates
+ * the real-world scenario where device is modified from fuzzer callback */
+static TriggerDeviceState *global_trigger_device_state = NULL;
+
+/* Timer callback that modifies secondary address space WITHOUT triggering
+ * primary address space commit - this is the key to reproducing the bug! */
+static void write_catcher_resize_callback(void *opaque)
+{
+    TriggerDeviceState *s = TRIGGER_DEVICE(opaque);
+    
+    if (!s->remote_device || s->timer_triggered) {
+        return;
+    }
+    
+    trace_reproducer_trigger_device_timer_resize();
+    
+    /* THIS IS THE BUG: Directly modify the secondary address space memory region
+     * WITHOUT going through the normal device resize that would trigger commits.
+     * This causes the TCG dispatch tables to become stale! */
+    memory_region_transaction_begin();
+    
+    /* Get direct access to the remote device's memory region and modify it
+     * This simulates the write_catcher_activate() function from the blog post */
+    MemoryRegion *remote_mmio = &s->remote_device->mmio;
+    
+    /* Change the size of the remote device region directly - this should 
+     * cause the dispatch map to become inconsistent */
+    memory_region_set_size(remote_mmio, 32 * 1024);  /* Expand from 4KiB to 32KiB */
+    
+    memory_region_transaction_commit();
+    
+    s->timer_triggered = true;
+    trace_reproducer_trigger_device_timer_complete();
+}
 
 static uint64_t trigger_device_read(void *opaque, hwaddr offset, unsigned size)
 {
@@ -32,10 +68,12 @@ static void trigger_device_write(void *opaque, hwaddr offset, uint64_t value, un
     
     trace_reproducer_trigger_device_write(offset, value, size);
     s->trigger_value = value;
-    /* Any write triggers the remote device resize */
-    if (s->remote_device) {
+    
+    /* Start timer to modify secondary address space asynchronously - this is the key! */
+    if (s->remote_device && !s->timer_triggered) {
         trace_reproducer_trigger_device_resize_triggered();
-        remote_device_resize(s->remote_device);
+        /* Delay the modification slightly to ensure it happens outside primary AS context */
+        timer_mod(s->resize_timer, qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) + 1000000); /* 1ms delay */
     }
 }
 
@@ -52,10 +90,21 @@ static const MemoryRegionOps trigger_device_ops = {
 static void trigger_device_realize(DeviceState *dev, Error **errp)
 {
     TriggerDeviceState *s = TRIGGER_DEVICE(dev);
-    s->trigger_value = 0;
+    
     memory_region_init_io(&s->mmio, OBJECT(s), &trigger_device_ops, s,
-                          "reproducer-trigger-mmio", 4);
+                          TYPE_TRIGGER_DEVICE, TRIGGER_DEVICE_SIZE);
     sysbus_init_mmio(SYS_BUS_DEVICE(s), &s->mmio);
+    
+    /* Initialize write catcher device (initially small and unmapped) */
+    memory_region_init_io(&s->write_catcher, OBJECT(s), &trigger_device_ops, s,
+                          "reproducer-write-catcher", 0x1000);
+    
+    /* Create timer for asynchronous address space modification */
+    s->resize_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, write_catcher_resize_callback, s);
+    s->timer_triggered = false;
+    
+    /* Set global pointer for timer callback access */
+    global_trigger_device_state = s;
 }
 
 static Property trigger_device_properties[] = {

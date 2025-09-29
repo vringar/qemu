@@ -13,18 +13,26 @@
 
 .global _start
 _start:
-    /* Write to trigger device to resize remote device */
-    ldr r0, =0x40000000         @ REPRODUCER_TRIGGER_BASE
-    ldr r1, =0x12345678         @ Test value
-    str r1, [r0]                @ Trigger resize operation
+    @ Write to trigger device to start timer
+    ldr r2, =0x40000000      @ Trigger device base address
+    ldr r1, =0x12345678      @ Test value 
+    str r1, [r2]             @ Write to trigger device - starts timer!
     
-    /* Write to mapper device through alias */
-    ldr r0, =0x40001000         @ REPRODUCER_MAPPER_BASE  
-    ldr r1, =0xDEADBEEF         @ Test pattern
-    str r1, [r0]                @ Write through alias
+    @ Wait for timer to expire (1ms delay) - busy wait loop
+    ldr r3, =100000          @ Loop counter for delay
+wait_loop:
+    subs r3, r3, #1
+    bne wait_loop
     
-    /* Read back from mapper device */
-    ldr r2, [r0]                @ Read back the value
+    @ NOW access the alias region AFTER timer has modified secondary space
+    @ This should trigger the assertion failure in iotlb_to_section()
+    ldr r2, =0x40001000      @ Alias region address (maps to secondary space)
+    ldr r1, =0xdeadbeef      @ Test value for remote device
+    str r1, [r2, #0x2000]    @ Write to expanded remote device through alias
+    ldr r0, [r2, #0x2000]    @ Read back from remote device through alias
+    
+    @ This access should fail with assertion in iotlb_to_section
+    @ because TCG dispatch is stale after timer modified secondary space
     
     /* Infinite loop */
 loop:

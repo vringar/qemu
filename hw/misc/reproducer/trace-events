@@ -11,6 +11,8 @@
 # hw/misc/reproducer/trigger-device.c
 reproducer_trigger_device_write(uint64_t offset, uint64_t value, unsigned size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=%u"
 reproducer_trigger_device_resize_triggered(void) "Triggering remote device resize"
+reproducer_trigger_device_timer_resize(void) "Timer callback: modifying secondary address space"
+reproducer_trigger_device_timer_complete(void) "Timer callback: address space modification complete"
 
 # hw/misc/reproducer/remote-device.c
 reproducer_remote_device_read(uint64_t offset, uint64_t value, unsigned size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=%u"

@@ -23,14 +23,22 @@ static void mapper_device_realize(DeviceState *dev, Error **errp)
                        "reproducer-secondary-space", MAPPER_SECONDARY_SPACE_SIZE);
     address_space_init(&s->secondary_as, &s->secondary_space, "reproducer-secondary");
     
+    /* Add a large RAM region that will conflict when remote device expands */
+    /* Position RAM so it conflicts with the expanded remote device size */
+    memory_region_init_ram(&s->large_ram_region, OBJECT(s), 
+                           "reproducer-large-ram", 32 * 1024, &error_fatal);
+    /* Mount RAM at offset 0x2000 with SAME priority as remote device - this should cause conflicts */
+    memory_region_add_subregion_overlap(&s->secondary_space, 0x2000, &s->large_ram_region, 1);
+    
     /* Initialize the remote device */
     object_initialize_child(OBJECT(s), "remote-device", &s->remote_device, TYPE_REMOTE_DEVICE);
     if (!qdev_realize(DEVICE(&s->remote_device), NULL, errp)) {
         return;
     }
     
-    /* Mount the remote device at offset 0 in secondary space */
-    memory_region_add_subregion(&s->secondary_space, 0, &s->remote_device.mmio);
+    /* Mount the remote device at offset 0 with SAME priority as RAM */
+    /* When remote device expands to 16KiB, it will directly conflict with RAM at same priority */
+    memory_region_add_subregion_overlap(&s->secondary_space, 0, &s->remote_device.mmio, 1);
     trace_reproducer_mapper_device_remote_mounted(0, REMOTE_DEVICE_INITIAL_SIZE);
     
     /* Create alias region that maps part of secondary space into CPU space */
