@@ -21,3 +21,4 @@ reproducer_remote_device_resized(uint32_t old_size, uint32_t new_size) "old_size
 
 # hw/misc/reproducer/mapper-device.c
 reproducer_mapper_device_remote_mounted(uint32_t offset, uint32_t size) "offset=0x%x size=%u"
+

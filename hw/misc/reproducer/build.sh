@@ -23,8 +23,8 @@ echo "Configuring QEMU..."
 ../configure \
     --target-list=arm-softmmu \
     --enable-debug \
-    --enable-trace-backends=simple \
-    --disable-fuse
+    --disable-fuse \
+    --enable-trace-backends=log \
 
 echo "Building QEMU..."
 make -j$(nproc) qemu-system-arm
@@ -34,6 +34,12 @@ echo "Build completed successfully!"
 echo ""
 echo "To test the reproducer devices, run:"
 echo "  ./qemu-system-arm -M reproducer -nographic -monitor stdio"
+echo ""
+echo "To test with tracing (working syntax with explicit log backend):"
+echo "  ./qemu-system-arm -M reproducer -nographic --trace \"reproducer_*\" -bios hw/misc/reproducer/simple_reproducer_test.bin"
+echo ""
+echo "Alternative tracing with file output:"
+echo "  ./qemu-system-arm -M reproducer -nographic --trace \"reproducer_*\" -D trace.log -bios hw/misc/reproducer/simple_reproducer_test.bin"
 echo ""
 echo "In the QEMU monitor, you can:"
 echo "  (qemu) info mtree"

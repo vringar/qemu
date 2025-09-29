@@ -21,9 +21,6 @@ static void reproducer_soc_init(Object *obj)
     /* Initialize devices */
     object_initialize_child(obj, "trigger", &s->trigger, TYPE_TRIGGER_DEVICE);
     object_initialize_child(obj, "mapper", &s->mapper, TYPE_MAPPER_DEVICE);
-    
-    /* Initialize ROM memory region (but don't add to system yet) */
-    memory_region_init_rom(&s->rom, obj, "reproducer.rom", REPRODUCER_ROM_SIZE, &error_fatal);
 }
 
 static void reproducer_soc_realize(DeviceState *dev, Error **errp)

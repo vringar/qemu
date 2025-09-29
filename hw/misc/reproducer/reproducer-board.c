@@ -16,13 +16,19 @@
 #include "hw/loader.h"
 #include "qemu/units.h"
 #include "hw/core/cpu.h"
+#include "system/memory.h"
 
 #define REPRODUCER_BIOS_ADDR    0x00000000
+#define REPRODUCER_RAM_ADDR     0x10000000
+#define REPRODUCER_RAM_SIZE     (64 * MiB)
 
 static void reproducer_board_init(MachineState *machine)
 {
     DeviceState *soc;
     Object *cpuobj;
+    MemoryRegion *sysmem = get_system_memory();
+    MemoryRegion *ram = g_new(MemoryRegion, 1);
+    MemoryRegion *rom = g_new(MemoryRegion, 1);
     int firmware_size;
     
     if (machine->ram_size != 0) {
@@ -40,6 +46,14 @@ static void reproducer_board_init(MachineState *machine)
     
     /* Realize the CPU */
     qdev_realize(DEVICE(cpuobj), NULL, &error_fatal);
+    
+    /* Add RAM to the system */
+    memory_region_init_ram(ram, NULL, "reproducer.ram", REPRODUCER_RAM_SIZE, &error_fatal);
+    memory_region_add_subregion(sysmem, REPRODUCER_RAM_ADDR, ram);
+    
+    /* Add ROM to the system for BIOS loading */
+    memory_region_init_rom(rom, NULL, "reproducer.rom", 1 * MiB, &error_fatal);
+    memory_region_add_subregion(sysmem, REPRODUCER_BIOS_ADDR, rom);
     
     /* Create and realize the SoC */
     soc = qdev_new(TYPE_REPRODUCER_SOC);

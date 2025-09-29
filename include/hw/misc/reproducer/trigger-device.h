@@ -19,7 +19,7 @@ OBJECT_DECLARE_SIMPLE_TYPE(TriggerDeviceState, TRIGGER_DEVICE)
 
 struct TriggerDeviceState {
     SysBusDevice parent_obj;
-
+    int64_t trigger_value;
     MemoryRegion mmio;
     RemoteDeviceState *remote_device;
 };

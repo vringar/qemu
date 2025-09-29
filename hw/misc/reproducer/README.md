@@ -7,6 +7,7 @@ This directory contains a complete reproducer setup for demonstrating TCG + phys
 The reproducer consists of five main components:
 
 ### Devices
+
 - **`trigger-device.c`**: 4-byte MMIO device at `0x40000000` that triggers remote device resizing
 - **`mapper-device.c`**: Contains a 16KiB alias at `0x40001000` and manages secondary address space  
 - **`remote-device.c`**: Resizable device (4KiB→16KiB) that creates overlap with alias
@@ -14,6 +15,7 @@ The reproducer consists of five main components:
 - **`reproducer-board.c`**: Machine type that instantiates the SoC
 
 ### Memory Layout
+
 ```
 Primary Address Space:
   0x40000000-0x40000003: reproducer-trigger-mmio (4 bytes)
@@ -30,6 +32,7 @@ Overlap Created:
 ## Files
 
 ### Core Implementation
+
 - `trigger-device.c/h` - Trigger device implementation
 - `mapper-device.c/h` - Mapper device with alias and secondary space
 - `remote-device.c/h` - Resizable remote device  
@@ -37,23 +40,27 @@ Overlap Created:
 - `reproducer-board.c` - Machine type registration
 
 ### Build System
+
 - `meson.build` - Build configuration
 - `Kconfig` - Configuration options
 - `trace-events` - Trace event definitions
 - `trace.h` - Trace header
 
 ### Test Programs
+
 - `simple_reproducer_test.s` - Simple ARM assembly test program
 - `simple_reproducer_test.bin` - Compiled ROM image (44 bytes)
 - `reproducer_test.s` - More complex ARM test program  
 - `reproducer_test.ld` - Linker script for ROM layout
 
 ### Scripts
+
 - `build.sh` - Complete build script for QEMU with reproducer
 - `test_reproducer.sh` - Test script for running reproducer
 - `debug_reproducer.sh` - Debug script with tracing
 
 ### Documentation
+
 - `context.md` - Detailed implementation context
 - `README.md` - This file
 

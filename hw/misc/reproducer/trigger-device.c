@@ -23,7 +23,7 @@ static uint64_t trigger_device_read(void *opaque, hwaddr offset, unsigned size)
     (void)size;   /* Suppress unused parameter warning */
     
     /* TODO: add tracing back later */
-    return 0; /* Always return 0 */
+    return s->trigger_value; /* Always return 0 */
 }
 
 static void trigger_device_write(void *opaque, hwaddr offset, uint64_t value, unsigned size)
@@ -31,7 +31,7 @@ static void trigger_device_write(void *opaque, hwaddr offset, uint64_t value, un
     TriggerDeviceState *s = TRIGGER_DEVICE(opaque);
     
     trace_reproducer_trigger_device_write(offset, value, size);
-    
+    s->trigger_value = value;
     /* Any write triggers the remote device resize */
     if (s->remote_device) {
         trace_reproducer_trigger_device_resize_triggered();
@@ -52,7 +52,7 @@ static const MemoryRegionOps trigger_device_ops = {
 static void trigger_device_realize(DeviceState *dev, Error **errp)
 {
     TriggerDeviceState *s = TRIGGER_DEVICE(dev);
-    
+    s->trigger_value = 0;
     memory_region_init_io(&s->mmio, OBJECT(s), &trigger_device_ops, s,
                           "reproducer-trigger-mmio", 4);
     sysbus_init_mmio(SYS_BUS_DEVICE(s), &s->mmio);
@@ -86,3 +86,4 @@ static void trigger_device_register_types(void)
 }
 
 type_init(trigger_device_register_types)
+
