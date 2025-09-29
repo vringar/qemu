@@ -24,7 +24,7 @@ static uint64_t remote_device_read(void *opaque, hwaddr offset, unsigned size)
     /* Simple pattern: return offset value for easy identification */
     value = offset | (size << 16);
     
-    trace_remote_device_read(offset, value, size);
+    trace_reproducer_remote_device_read(offset, value, size);
     return value;
 }
 
@@ -34,7 +34,7 @@ static void remote_device_write(void *opaque, hwaddr offset, uint64_t value, uns
     
     (void)s;  /* Suppress unused variable warning */
     
-    trace_remote_device_write(offset, value, size);
+    trace_reproducer_remote_device_write(offset, value, size);
     /* No actual functionality - just logging */
 }
 
@@ -50,27 +50,21 @@ static const MemoryRegionOps remote_device_ops = {
 
 void remote_device_resize(RemoteDeviceState *s)
 {
-    trace_remote_device_resize_start(s->is_expanded);
+    trace_reproducer_remote_device_resize_start(s->is_expanded);
     
     if (s->is_expanded) {
-        trace_remote_device_resize_skipped();
-        return; /* Already expanded */
+        trace_reproducer_remote_device_resize_skipped();
+        return;
     }
     
-    /* Remove the old region */
-    memory_region_del_subregion(s->mmio.container, &s->mmio);
+    /* Expand from 4KiB to 16KiB */
+    uint32_t old_size = REMOTE_DEVICE_INITIAL_SIZE;
+    uint32_t new_size = REMOTE_DEVICE_EXPANDED_SIZE;
     
-    /* Recreate with new size */
-    object_unparent(OBJECT(&s->mmio));
-    memory_region_init_io(&s->mmio, OBJECT(s), &remote_device_ops, s,
-                          "reproducer-remote-mmio", REMOTE_DEVICE_EXPANDED_SIZE);
-    
-    /* Add back to container */
-    memory_region_add_subregion(s->mmio.container, 0, &s->mmio);
-    
+    memory_region_set_size(&s->mmio, new_size);
     s->is_expanded = true;
     
-    trace_remote_device_resized(REMOTE_DEVICE_INITIAL_SIZE, REMOTE_DEVICE_EXPANDED_SIZE);
+    trace_reproducer_remote_device_resized(old_size, new_size);
 }
 
 static void remote_device_realize(DeviceState *dev, Error **errp)

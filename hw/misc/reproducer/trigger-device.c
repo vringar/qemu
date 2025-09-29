@@ -30,11 +30,11 @@ static void trigger_device_write(void *opaque, hwaddr offset, uint64_t value, un
 {
     TriggerDeviceState *s = TRIGGER_DEVICE(opaque);
     
-    trace_trigger_device_write(offset, value, size);
+    trace_reproducer_trigger_device_write(offset, value, size);
     
     /* Any write triggers the remote device resize */
     if (s->remote_device) {
-        trace_trigger_device_resize_triggered();
+        trace_reproducer_trigger_device_resize_triggered();
         remote_device_resize(s->remote_device);
     }
 }

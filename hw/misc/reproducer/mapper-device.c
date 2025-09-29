@@ -31,7 +31,7 @@ static void mapper_device_realize(DeviceState *dev, Error **errp)
     
     /* Mount the remote device at offset 0 in secondary space */
     memory_region_add_subregion(&s->secondary_space, 0, &s->remote_device.mmio);
-    trace_mapper_device_remote_mounted(0, REMOTE_DEVICE_INITIAL_SIZE);
+    trace_reproducer_mapper_device_remote_mounted(0, REMOTE_DEVICE_INITIAL_SIZE);
     
     /* Create alias region that maps part of secondary space into CPU space */
     memory_region_init_alias(&s->alias_region, OBJECT(s), 
