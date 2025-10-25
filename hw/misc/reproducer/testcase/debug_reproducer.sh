@@ -1,12 +1,42 @@
 #!/bin/bash
 
 # Debug script for reproducer ARM CPU boot investigation
+# Usage: ./debug_reproducer.sh [--new]
+#   --new: Use the new C version (reproducer_test.bin) instead of assembly version
 # This will run QEMU under GDB to investigate why ARM CPU doesn't execute ROM
 
-cd /run/media/stefan/02e400c2-1bdd-4d46-a0dd-044d6b4f3af4/Projekte/qemu
+# Parse command line arguments
+USE_NEW_VERSION=false
+if [[ "$1" == "--new" ]]; then
+    USE_NEW_VERSION=true
+    echo "Using new C version: reproducer_test.bin"
+else
+    echo "Using assembly version: simple_reproducer_test.bin"
+fi
+
+# Set BIOS file based on version
+if [[ "$USE_NEW_VERSION" == "true" ]]; then
+    BIOS_FILE="reproducer_test.bin"
+else
+    BIOS_FILE="simple_reproducer_test.bin"
+fi
+
+# Get the directory of this script and determine paths
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+QEMU_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+TESTCASE_DIR="$SCRIPT_DIR"
+BIOS_PATH="$TESTCASE_DIR/$BIOS_FILE"
+
+echo "Script dir: $SCRIPT_DIR"
+echo "QEMU root: $QEMU_ROOT"
+echo "Using BIOS: $BIOS_PATH"
+
+# Change to QEMU root directory
+cd "$QEMU_ROOT"
 
 echo "Reproducer ARM CPU Boot Debug"
 echo "============================="
+echo "Testing version: $BIOS_FILE"
 echo "Investigating why ARM CPU doesn't execute loaded ROM content"
 echo ""
 
@@ -29,7 +59,7 @@ quit
 EOF
 
 echo "   Starting QEMU with GDB server..."
-./build/qemu-system-arm -M reproducer -nographic -bios hw/misc/reproducer/simple_reproducer_test.bin -s -S &
+./build/qemu-system-arm -M reproducer -nographic -bios "$BIOS_PATH" -s -S &
 QEMU_PID=$!
 sleep 2
 
@@ -41,7 +71,7 @@ wait $QEMU_PID 2>/dev/null
 echo ""
 echo "2. Interactive debugging session:"
 echo "   To debug interactively, run:"
-echo "   Terminal 1: ./build/qemu-system-arm -M reproducer -nographic -bios hw/misc/reproducer/simple_reproducer_test.bin -s -S"
+echo "   Terminal 1: ./build/qemu-system-arm -M reproducer -nographic -bios \"$BIOS_PATH\" -s -S"
 echo "   Terminal 2: gdb-multiarch"
 echo "              (gdb) target remote localhost:1234"
 echo "              (gdb) x/5i 0x0          # Check ROM content"
@@ -52,7 +82,7 @@ echo "              (gdb) continue          # Continue execution"
 echo ""
 echo "3. Trace debugging:"
 echo "   To debug with tracing:"
-echo "   ./build/qemu-system-arm -M reproducer -nographic --trace \"reproducer_*\" -bios hw/misc/reproducer/simple_reproducer_test.bin"
+echo "   ./build/qemu-system-arm -M reproducer -nographic --trace \"reproducer_*\" -bios \"$BIOS_PATH\""
 
 echo ""
 echo "4. Monitor debugging:"
@@ -79,7 +109,7 @@ EOF
 echo ""
 echo "5. Device access debugging:"
 echo "   To debug device access, use device_debug.gdb:"
-echo "   Terminal 1: ./build/qemu-system-arm -M reproducer -nographic -bios hw/misc/reproducer/simple_reproducer_test.bin -s"
+echo "   Terminal 1: ./build/qemu-system-arm -M reproducer -nographic -bios \"$BIOS_PATH\" -s"
 echo "   Terminal 2: gdb-multiarch --command=device_debug.gdb ./build/qemu-system-arm"
 
 echo ""
@@ -92,8 +122,13 @@ rm -f rom_check.gdb
 
 echo ""
 echo "Current Investigation Status:"
-echo "- ✅ BIOS loads successfully to ROM at 0x0"
+echo "- ✅ BIOS ($BIOS_FILE) loads successfully to ROM at 0x0"
 echo "- ✅ Memory layout correct (ROM, RAM, devices)"
 echo "- ✅ ARM Cortex-A9 CPU configured"
+if [[ "$USE_NEW_VERSION" == "true" ]]; then
+    echo "- ✅ C version with proper startup code"
+else
+    echo "- ✅ Assembly version tested"
+fi
 echo "- 🔍 CPU doesn't automatically execute ROM content"
 echo "- 🔍 Need to investigate ARM reset vectors and boot sequence"

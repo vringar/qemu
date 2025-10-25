@@ -1,0 +1,3 @@
+info mtree
+info registers
+quit

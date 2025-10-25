@@ -24,12 +24,9 @@ wait_loop:
     subs r3, r3, #1
     bne wait_loop
     
-    @ NOW access the alias region AFTER timer has modified secondary space
-    @ This should trigger the assertion failure in iotlb_to_section()
-    ldr r2, =0x40001000      @ Alias region address (maps to secondary space)
-    ldr r1, =0xdeadbeef      @ Test value for remote device
-    str r1, [r2, #0x2000]    @ Write to expanded remote device through alias
-    ldr r0, [r2, #0x2000]    @ Read back from remote device through alias
+    @ Access through alias region (should trigger assertion)
+    ldr r0, =0x50000000      @ ALIAS_REGION_BASE  
+    ldr r1, [r0]             @ Read from alias region
     
     @ This access should fail with assertion in iotlb_to_section
     @ because TCG dispatch is stale after timer modified secondary space
