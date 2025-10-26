@@ -1,0 +1,4 @@
+config REPRODUCER
+    bool
+    default y
+    depends on ARM
